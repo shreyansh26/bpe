@@ -138,10 +138,11 @@ def pretokenize(pre_tokenization_regex: str, file_path: str, split_special_token
 
 
 if __name__ == "__main__":
+    split = "valid"
     start = time.time()
     pre_tokens = pretokenize(
         r"""'(?:[sdmt]|ll|ve|re)| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+""", 
-        "data/TinyStoriesV2-GPT4-train.txt",
+        f"data/TinyStoriesV2-GPT4-{split}.txt",
         b"<|endoftext|>" # Pass the byte string directly
     )
     print(len(pre_tokens))
@@ -162,5 +163,5 @@ if __name__ == "__main__":
       print(f"\nToken '{lookup_token}' not found.")
 
     # Store the pre_tokens in a pickle file
-    with open("data/pre_tokens.pkl", "wb") as f:
+    with open(f"tokenizer/pre_tokens_{split}.pkl", "wb") as f:
         pickle.dump(pre_tokens, f)
