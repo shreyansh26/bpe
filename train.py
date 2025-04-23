@@ -53,7 +53,7 @@ def update_pair_freqs(word_splits: dict, pre_tokens: dict, best_pair: tuple, pai
 
     return pair_freqs, pair_index
 
-def train(pre_tokens: dict, max_vocab_size: int = 10_000, special_tokens: list[bytes] = []):
+def train(pre_tokens: dict, max_vocab_size: int = 10_000, special_tokens: list[str] = []):
     vocab = {i: bytes([i]) for i in range(256)}
     vocab_special_tokens = {}
     for i, special_token in enumerate(special_tokens):
