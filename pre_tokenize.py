@@ -14,6 +14,8 @@ def find_chunk_boundaries(
     split_special_token: bytes
 ) -> list[int]:
     """
+    From the Stanford CS336 assignment helper function - https://github.com/stanford-cs336/assignment1-basics/blob/main/cs336_basics/pretokenization_example.py
+
     Chunk the file into parts that can be counted independently based on byte offsets.
     Ensures chunks do not split the `split_special_token`.
     May return fewer chunks than desired if boundaries overlap.
