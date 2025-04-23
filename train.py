@@ -27,9 +27,7 @@ def merge_pair(word_splits: dict, pair: tuple, pair_index: dict):
         i = 0
         while i < len(split) - 1:
             if split[i] == pair[0] and split[i+1] == pair[1]:
-                # print("Old", split)
                 split = split[:i] + [pair[0] + pair[1]] + split[i+2:]
-                # print("Now", split)
             else:
                 i += 1
             
@@ -73,20 +71,14 @@ def train(pre_tokens: dict, max_vocab_size: int = 10_000, special_tokens: list[s
 
         vocab_id = len(vocab)
         merges[best_pair] = vocab_id
-        # print(best_pair, vocab_id)
 
-        # start = time.time()
         word_splits = merge_pair(word_splits, best_pair, pair_index)
-        # end = time.time()
-        # print(f"Time taken merging pair: {end - start} seconds")
 
         new_vocab_token = best_pair[0] + best_pair[1]
 
         vocab[vocab_id] = new_vocab_token
-        # start = time.time()
+
         pair_freqs, pair_index = update_pair_freqs(word_splits, pre_tokens, best_pair, pair_freqs, pair_index, new_vocab_token)
-        # end = time.time()
-        # print(f"Time taken updating pair freqs: {end - start} seconds")
 
     return vocab, merges, vocab_special_tokens
 
