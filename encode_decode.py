@@ -12,6 +12,7 @@ class Tokenizer:
         self.pattern = re.compile(r"""'(?:[sdmt]|ll|ve|re)| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+""")
         self.vocab = pickle.load(open(vocab_path, "rb"))
         self.vocab_special_tokens = pickle.load(open(vocab_special_tokens_path, "rb"))
+        self.inv_vocab_special_tokens = {v: k for k, v in self.vocab_special_tokens.items()}
         self.merges = pickle.load(open(merges_path, "rb"))
         self.special_tokens = special_tokens
     
@@ -28,10 +29,8 @@ class Tokenizer:
         i = 0
         while i < len(bytes_arr) - 1:
             if bytes_arr[i] == pair[0] and bytes_arr[i+1] == pair[1]:
-                # print("Old", split)
                 bytes_arr = bytes_arr[:i] + [pair[0] + pair[1]] + bytes_arr[i+2:]
                 tokens = tokens[:i] + [new_token] + tokens[i+2:]
-                # print("Now", split)
             else:
                 i += 1
             
@@ -41,13 +40,9 @@ class Tokenizer:
         bytes_arr = [bytes([b]) for b in pre_token]
         tokens = list(pre_token)
 
-        print(tokens, bytes_arr)
-
         while len(bytes_arr) > 2:
             pair_freqs = self.get_pair_freqs(bytes_arr)
             best_pair = min(pair_freqs, key=lambda x: self.merges.get(x, float("inf")))
-
-            print(best_pair)
 
             if best_pair not in self.merges:
                 break
@@ -55,7 +50,6 @@ class Tokenizer:
             new_token = self.merges[best_pair]
 
             bytes_arr, tokens = self.merge_pair(bytes_arr, best_pair, tokens, new_token)
-            print("New tokens", tokens)
 
         return tokens
 
@@ -73,13 +67,37 @@ class Tokenizer:
                     curr_tokens = self.encode_pre_token(pre_token.encode("utf-8"))
                     tokens.extend(curr_tokens)
         return tokens
+
+    def decode(self, tokens: list[int], print_tokenwise: bool = False) -> str:
+        bytes_str = b""
+        for token in tokens:
+            if token in self.vocab:
+                bytes_str += self.vocab[token]
+                if print_tokenwise:
+                    print(self.vocab[token])
+            elif token in self.inv_vocab_special_tokens:
+                bytes_str += self.inv_vocab_special_tokens[token]
+                if print_tokenwise:
+                    print(self.inv_vocab_special_tokens[token])
+            else:
+                raise ValueError(f"Token {token} not found in vocab or special tokens")
+        
+        return bytes_str.decode("utf-8", errors="replace")
         
 
 if __name__ == "__main__":
     tokenizer = Tokenizer("tokenizer/", split="valid")
     s = "Hello, world! <|endoftext|>\nHow are you? Excited?"
     toks = tokenizer.encode(s)
+
+    print("Original String")
+    print("---------------")
+    print(s)
+
+    print("\nEncoded Tokens")
+    print("---------------")
     print(toks)
 
-    for tok in toks:
-        print(tokenizer.vocab[tok])
+    print("\nDecoded String")
+    print("---------------")
+    print(tokenizer.decode(toks, print_tokenwise=True))
