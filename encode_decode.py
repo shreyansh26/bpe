@@ -86,7 +86,7 @@ class Tokenizer:
         
 
 if __name__ == "__main__":
-    tokenizer = Tokenizer("tokenizer/", split="valid")
+    tokenizer = Tokenizer("tokenizer/", split="train")
     s = "Hello, world! <|endoftext|>\nHow are you? Excited?"
     toks = tokenizer.encode(s)
 

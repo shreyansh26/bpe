@@ -139,7 +139,7 @@ def pretokenize(pre_tokenization_regex: str, file_path: str, split_special_token
 
 
 if __name__ == "__main__":
-    split = "valid"
+    split = "train"
     start = time.time()
     pre_tokens = pretokenize(
         r"""'(?:[sdmt]|ll|ve|re)| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+""", 

@@ -92,7 +92,7 @@ def train(pre_tokens: dict, max_vocab_size: int = 10_000, special_tokens: list[s
 
 
 if __name__ == "__main__":
-    split = "valid"
+    split = "train"
     with open(f"tokenizer/pre_tokens_{split}.pkl", "rb") as f:
         pre_tokens = pickle.load(f)
 
