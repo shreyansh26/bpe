@@ -54,8 +54,8 @@ def update_pair_freqs(word_splits: dict, pre_tokens: dict, best_pair: tuple, pai
     return pair_freqs, pair_index
 
 def train(pre_tokens: dict, max_vocab_size: int = 10_000):
-    vocab = {bytes([i]): i for i in range(256)}
-    vocab["<|endoftext|>".encode("utf-8")] = 256
+    vocab = {i: bytes([i]) for i in range(256)}
+    vocab[256] = "<|endoftext|>".encode("utf-8")
     merges = {}
 
     num_merges = max_vocab_size - len(vocab)
@@ -87,7 +87,7 @@ def train(pre_tokens: dict, max_vocab_size: int = 10_000):
 
 
 if __name__ == "__main__":
-    split = "valid"
+    split = "train"
     with open(f"tokenizer/pre_tokens_{split}.pkl", "rb") as f:
         pre_tokens = pickle.load(f)
 
