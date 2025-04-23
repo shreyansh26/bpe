@@ -53,9 +53,14 @@ def update_pair_freqs(word_splits: dict, pre_tokens: dict, best_pair: tuple, pai
 
     return pair_freqs, pair_index
 
-def train(pre_tokens: dict, max_vocab_size: int = 10_000):
+def train(pre_tokens: dict, max_vocab_size: int = 10_000, special_tokens: list[bytes] = []):
     vocab = {i: bytes([i]) for i in range(256)}
-    vocab[256] = "<|endoftext|>".encode("utf-8")
+    vocab_special_tokens = {}
+    for i, special_token in enumerate(special_tokens):
+        tok = special_token.encode("utf-8")
+        vocab[256 + i] = tok
+        vocab_special_tokens[tok] = 256 + i
+
     merges = {}
 
     num_merges = max_vocab_size - len(vocab)
@@ -83,16 +88,16 @@ def train(pre_tokens: dict, max_vocab_size: int = 10_000):
         # end = time.time()
         # print(f"Time taken updating pair freqs: {end - start} seconds")
 
-    return vocab, merges
+    return vocab, merges, vocab_special_tokens
 
 
 if __name__ == "__main__":
-    split = "train"
+    split = "valid"
     with open(f"tokenizer/pre_tokens_{split}.pkl", "rb") as f:
         pre_tokens = pickle.load(f)
 
     start = time.time()
-    vocab, merges = train(pre_tokens, max_vocab_size=10_000)
+    vocab, merges, vocab_special_tokens = train(pre_tokens, max_vocab_size=10_000, special_tokens=["<|endoftext|>"])
     end = time.time()
     print(f"Time taken training: {end - start} seconds")
 
@@ -122,3 +127,6 @@ if __name__ == "__main__":
 
     with open(f"tokenizer/merges_{split}.pkl", "wb") as f:
         pickle.dump(merges, f)
+
+    with open(f"tokenizer/vocab_special_tokens_{split}.pkl", "wb") as f:
+        pickle.dump(vocab_special_tokens, f)
