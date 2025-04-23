@@ -62,7 +62,7 @@ def process_chunk(
     start: int, 
     end: int, 
     regex_pattern_str: str, 
-    split_special_token_bytes: bytes
+    split_special_tokens: list[str]
 ) -> defaultdict[str, int]:
     """
     Reads a specific byte range, decodes it, splits by the special token,
@@ -76,13 +76,14 @@ def process_chunk(
             chunk_bytes = f.read(end - start)
             chunk_str = chunk_bytes.decode("utf-8", errors="ignore")
             
-            split_token_str = split_special_token_bytes.decode("utf-8", errors="ignore")
-
-            sub_chunks = chunk_str.split(split_token_str)
+            special_token_pattern = "(" + "|".join(re.escape(k) for k in split_special_tokens) + ")"
+            sub_chunks = re.split(special_token_pattern, chunk_str)
 
             # Process each sub-chunk (text between special tokens) individually
             for sub_chunk in sub_chunks:
                 if not sub_chunk: # Skip empty strings resulting from split
+                    continue
+                if sub_chunk in split_special_tokens:
                     continue
                 # Find and count all token occurrences in the sub-chunk
                 for match in re.finditer(pattern, sub_chunk):
@@ -95,7 +96,7 @@ def process_chunk(
         print(f"Error processing chunk {start}-{end} in {file_path}: {e}")
     return counts
 
-def pretokenize(pre_tokenization_regex: str, file_path: str, split_special_token: bytes) -> dict:
+def pretokenize(pre_tokenization_regex: str, file_path: str, split_special_tokens: list[str]) -> dict:
     """
     Finds chunk boundaries, processes chunks in parallel (splitting internally by special token), 
     and aggregates token counts.
@@ -103,7 +104,7 @@ def pretokenize(pre_tokenization_regex: str, file_path: str, split_special_token
     # 1. Find chunk boundaries based on the special token
     try:
         with open(file_path, "rb") as f:
-            chunk_boundaries = find_chunk_boundaries(f, NUM_PROCESSES, split_special_token)
+            chunk_boundaries = find_chunk_boundaries(f, NUM_PROCESSES, b"<|endoftext|>")
     except FileNotFoundError:
         print(f"Error: File not found at {file_path}")
         return {}
@@ -113,7 +114,7 @@ def pretokenize(pre_tokenization_regex: str, file_path: str, split_special_token
     tasks = []
     for start, end in zip(chunk_boundaries[:-1], chunk_boundaries[1:]):
         if start < end: # Ensure chunk has size > 0
-            tasks.append((file_path, start, end, pre_tokenization_regex, split_special_token)) # Add split_special_token here
+            tasks.append((file_path, start, end, pre_tokenization_regex, split_special_tokens)) # Add split_special_token here
         else:
             print(f"Skipping empty chunk at boundary {start}")
 
@@ -143,7 +144,7 @@ if __name__ == "__main__":
     pre_tokens = pretokenize(
         r"""'(?:[sdmt]|ll|ve|re)| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+""", 
         f"data/TinyStoriesV2-GPT4-{split}.txt",
-        b"<|endoftext|>" # Pass the byte string directly
+        ["<|endoftext|>"]
     )
     print(len(pre_tokens))
     end = time.time()
@@ -162,6 +163,5 @@ if __name__ == "__main__":
     else:
       print(f"\nToken '{lookup_token}' not found.")
 
-    # Store the pre_tokens in a pickle file
     with open(f"tokenizer/pre_tokens_{split}.pkl", "wb") as f:
         pickle.dump(pre_tokens, f)
